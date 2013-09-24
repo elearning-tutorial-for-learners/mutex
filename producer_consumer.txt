@@ -1,0 +1,213 @@
+without semaphore
+int itemCount = 0;
+ 
+procedure producer() {
+    while (true) {
+        item = produceItem();
+ 
+        if (itemCount == BUFFER_SIZE) {
+            sleep();
+        }
+ 
+        putItemIntoBuffer(item);
+        itemCount = itemCount + 1;
+ 
+        if (itemCount == 1) {
+            wakeup(consumer);
+        }
+    }
+}
+ 
+procedure consumer() {
+    while (true) {
+ 
+        if (itemCount == 0) {
+            sleep();
+        }
+ 
+        item = removeItemFromBuffer();
+        itemCount = itemCount - 1;
+ 
+        if (itemCount == BUFFER_SIZE - 1) {
+            wakeup(producer);
+        }
+ 
+        consumeItem(item);
+    }
+}
+
+
+
+
+with semaphore
+include <cstdio>
+#include <cstdlib>
+#include <pthread.h>
+#include <unistd.h>
+
+using namespace std;
+
+pthread_mutex_t mu = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t ec = PTHREAD_COND_INITIALIZER;
+pthread_cond_t fc = PTHREAD_COND_INITIALIZER;
+
+queue<int> qu;
+const int N = 2;
+
+void *producer(void *arg)
+{
+    while(1) {
+        pthread_mutex_lock(&mu);
+        int tmp = rand();
+        qu.push(tmp);
+        pthread_cond_signal(&ec);
+        if ((int) qu.size() > N) {
+            pthread_cond_wait(&fc, &mu);
+        }
+        pthread_mutex_unlock(&mu);
+    }
+}
+
+void *consumer(void *arg)
+{
+    while(1) {
+        pthread_mutex_lock(&mu);
+        if ((int) qu.size() < 1) {
+            pthread_cond_wait(&ec, &mu);
+        }
+        int tmp = qu.front();
+        qu.pop();
+        if ((int) qu.size() <= N) {
+            pthread_cond_signal(&fc);
+        }
+        pthread_mutex_unlock(&mu);
+        //sleep(1);
+    }
+}
+
+int main()
+{
+    pthread_t tid;
+    pthread_create(&tid, NULL, producer, NULL);
+    for (int i = 0; i < N; i++) {
+        pthread_t tid;
+        pthread_create(&tid, NULL, consumer, NULL);
+    }
+
+    printf("all created\n");
+
+    sleep(600);
+
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+}
