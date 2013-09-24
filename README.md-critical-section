@@ -1,0 +1,63 @@
+mutex
+=====
+
+implementation of critical section in linux/unix and windows 
+
+/* Example Code For Critical Sections with POSIX pthread library */
+
+/* Sample C/C++, Unix/Linux */
+#include <pthread.h>
+ 
+/* This is the critical section object (statically allocated). */
+static pthread_mutex_t cs_mutex = PTHREAD_MUTEX_INITIALIZER;
+ 
+void f()
+{
+    /* Enter the critical section -- other threads are locked out */
+    pthread_mutex_lock( &cs_mutex );
+ 
+    /* Do some thread-safe processing! */
+ 
+    /*Leave the critical section -- other threads can now pthread_mutex_lock()  */
+    pthread_mutex_unlock( &cs_mutex );
+}
+ 
+int main()
+{
+    f();
+ 
+    return 0;
+}
+
+/* Example Code For Critical Sections with Win32 API */
+
+#include <windows.h>
+ 
+static CRITICAL_SECTION cs; /* This is the critical section object -- once initialized,
+                               it cannot be moved in memory */
+                            /* If you program in OOP, declare this as a non-static member in your class */ 
+void f()
+{
+    /* Enter the critical section -- other threads are locked out */
+    EnterCriticalSection(&cs);
+ 
+    /* Do some thread-safe processing! */
+ 
+    /* Leave the critical section -- other threads can now EnterCriticalSection() */
+    LeaveCriticalSection(&cs);
+}
+ 
+int main()
+{
+    /* Initialize the critical section before entering multi-threaded context. */
+    InitializeCriticalSection(&cs);
+ 
+    f(); 
+ 
+    /* Release system object when all finished -- usually at the end of the cleanup code */
+    DeleteCriticalSection(&cs);
+ 
+    return 0;
+}
+
+

@@ -1,0 +1,30 @@
+mutex
+=====
+
+implementation of spin lock
+
+// acquire the lock
+class Lock
+{
+    volatile int dest = 0;
+    int exchange = 100;
+    int compare = 0;
+    void acquire()
+    {
+        While(true)
+        {
+            if(interlockedCompareExchange(&dest, exchange, compare) == 0)
+            {
+                // lock acquired 
+                break;
+            }
+        }
+    }
+    // release the lock
+    Void release()
+    {
+        // lock released 
+       dest = 0; 
+    }
+    };
+.......

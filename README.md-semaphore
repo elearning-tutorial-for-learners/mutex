@@ -1,0 +1,181 @@
+mutex
+=====
+
+implementation of process synchronization using semaphore
+
+#include <stdio.h>
+#include <pthread.h>
+#include <time.h>
+#include <stdlib.h>
+#define num_thread 20
+
+char str[11];
+void *thread_work(void *tid);   //Main body of Thread working
+void generate_str(int n);       //Create random character string
+void str_sort(void);            //Sorting the generated string into alpabet manner
+void check_sort(void);          //Check about "Is the sorting is right"
+void print_time(struct timespec *myclock);  //print the time interval of thread work
+void print_time_program(struct timespec *myclock);
+void wait(void);           //I put in these two function to be act like semaphore
+void Signal(void);         //But it does't work
+int S=1;
+
+int main(void)
+{
+  pthread_t tid[num_thread];
+  int rc; 
+  int t;
+  struct timespec myclock[4];
+  srand(time(NULL));
+  clock_gettime(CLOCK_REALTIME, &myclock[2]);
+  for(t=0; t<num_thread; t++)
+      pthread_create(&tid[t], NULL, thread_work, (void *)&t);
+
+  for(t=0; t<num_thread; t++)
+      pthread_join(tid[t], NULL);
+
+
+  clock_gettime(CLOCK_REALTIME, &myclock[3]);
+  print_time_program(myclock);
+  return 0;
+}
+
+void *thread_work(void *t)
+{
+  do
+  {
+      wait();           //Entry Section
+
+      //CRITICAL SECTION START
+
+              struct timespec myclock[2];
+      clock_gettime(CLOCK_REALTIME, &myclock[0]);   
+      int n = *((int *)t);
+      printf("########## Thread #%d starting ########## \n", n);
+      generate_str(n);
+      str_sort();
+      check_sort();
+      printf("########## Thread #%d exiting  ##########\n", n);
+      clock_gettime(CLOCK_REALTIME, &myclock[1]);
+      print_time(myclock);
+
+              //CRITICAL SECTION END
+
+      Signal();
+      pthread_exit(NULL);
+  }while (1);               
+
+}
+
+void str_sort(void)
+{
+  int temp;
+  int i, j;
+
+  for(i=0; i<9; i++)
+      for(j=0; j<9-i; j++)
+      {
+          if(str[j]>str[j+1])
+          {
+                  temp=str[j];
+              str[j]=str[j+1];
+              str[j+1]=temp;
+          }
+      }
+  printf("Sorted string      : %s  ", str);
+}
+
+void generate_str(int n)
+{
+      int i;
+  int num;
+  srand(n);
+  for(i=0; i<10; i++)
+  {
+      num = (97+rand()%26);
+      str[i]=num;
+  }
+
+  str[10]='\0';
+  printf("Initialized string : %s \n", str);
+}
+
+void check_sort(void)
+{
+  int i;
+  int count=0;
+  for(i=0; i<9; i++)
+  {
+      if(str[i]>str[i+1])
+          count++;
+  }
+  if(count != 0)
+      printf("[X] FALSE \n");
+  else
+      printf("[O] TRUE \n");
+  }
+
+void print_time(struct timespec *myclock)
+{
+  long delay, temp, temp_n, sec;
+  sec = myclock[0].tv_sec % 60;
+  printf("Thread Starting Time : %ld.%ld second\n", sec, myclock[0].tv_nsec);
+  sec = myclock[1].tv_sec % 60;
+  printf("Thread Exiting Time  : %ld.%ld second\n", sec, myclock[1].tv_nsec);
+
+  if (myclock[1].tv_nsec >= myclock[0].tv_nsec) 
+  { 
+      temp = myclock[1].tv_sec - myclock[0].tv_sec; 
+      temp_n = myclock[1].tv_nsec - myclock[0].tv_nsec; 
+      delay = 1000000000 * temp + temp_n; 
+  }
+  else 
+  { 
+      temp = myclock[1].tv_sec - myclock[0].tv_sec - 1; 
+      temp_n = 1000000000 + myclock[1].tv_nsec - myclock[0].tv_nsec; 
+      delay = 1000000000 * temp + temp_n; 
+  }  
+
+  printf("Thread Working Time  : %ld nano second", delay);
+  delay = delay / 1000000;
+  printf("(%ld ms)\n\n\n", delay);
+  return ;
+}
+
+void print_time_program(struct timespec *myclock)
+{
+  long delay, temp, temp_n, sec;
+  sec = myclock[2].tv_sec % 60;
+  printf("Program Starting Time : %ld.%ld second\n", sec, myclock[2].tv_nsec);
+  sec = myclock[3].tv_sec % 60;
+  printf("Program Exiting Time  : %ld.%ld second\n", sec, myclock[3].tv_nsec);
+
+  if (myclock[3].tv_nsec >= myclock[2].tv_nsec) 
+  { 
+      temp = myclock[3].tv_sec - myclock[2].tv_sec; 
+      temp_n = myclock[3].tv_nsec - myclock[2].tv_nsec; 
+      delay = 1000000000 * temp + temp_n; 
+  }
+  else 
+  { 
+      temp = myclock[3].tv_sec - myclock[2].tv_sec - 1; 
+      temp_n = 1000000000 + myclock[3].tv_nsec - myclock[2].tv_nsec; 
+      delay = 1000000000 * temp + temp_n; 
+  } 
+
+  printf("Program Total Working Time : %ld nano second", delay);
+  delay = delay / 1000000;
+  printf("(%ld ms)\n\n\n", delay);
+  return ;
+}
+
+void wait(void)
+{
+  while( S <= 0);
+  S--;
+}
+
+void Signal(void)
+{
+  S++;
+}
